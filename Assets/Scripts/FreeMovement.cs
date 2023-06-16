@@ -12,7 +12,7 @@ public class FreeMovement : MonoBehaviour
     [SerializeField] float lookSpeedX = 0.17f, lookSpeedY = 0.12f;
     InputAction move, look;
     private Transform grabTransform;
-    [SerializeField] float selectionRange = 50f;
+    // [SerializeField] float selectionRange = 50f;
     [SerializeField] LayerMask selectableMask = 64;
 
     void Start()
@@ -75,7 +75,6 @@ public class FreeMovement : MonoBehaviour
         move.Enable();
         look.Enable();
     }
-
     void OnDisable()
     {
         move.Disable();
@@ -106,13 +105,26 @@ public class FreeMovement : MonoBehaviour
     {
         DoMovement();
         
-        // if (EventSystem.current != null)
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        Physics.Raycast(ray, out RaycastHit raycastHit, 50f, selectableMask);
-        
-        DoOutlines(raycastHit);
-        DoClicks(raycastHit);
-        // DoDrags(raycastHit); // Will need rewrite since transform offset is no longer fixed to camera
+        if (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject())
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Physics.Raycast(ray, out RaycastHit raycastHit, float.PositiveInfinity, selectableMask);
+            
+            DoOutlines(raycastHit);
+            DoClicks(raycastHit);
+            // DoDrags(raycastHit); // Will need rewrite since transform offset is no longer fixed to camera
+        } else {
+            // Putting the outline removal code here is hacky and bad. I don't know how I can fix this.
+            if (hoverable != null)
+            {
+                try {
+                    hoverable.Unhover();
+                } catch (System.Exception e) {
+                    Debug.LogWarning(e);
+                }
+                hoverable = null;
+            }
+        }
     }
 
     void DoMovement()

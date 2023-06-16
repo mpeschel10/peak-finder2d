@@ -73,7 +73,9 @@ public class Tiles : MonoBehaviour
         float height = GetHeight(r, c);
         heights[r][c] = height;
         Color color = Color.HSVToRGB(height, 1f, 0.5f);
-        tiles[r][c].GetComponent<MeshRenderer>().material.color = color;
+        GameObject tile = tiles[r][c];
+        tile.GetComponent<MeshRenderer>().material.color = color;
+        tile.layer = 0;
     }
 
     float GetHeight(int r, int c)
