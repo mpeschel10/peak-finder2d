@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 public class FreeMovement : MonoBehaviour
 {
@@ -103,6 +104,19 @@ public class FreeMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        DoMovement();
+        
+        // if (EventSystem.current != null)
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Physics.Raycast(ray, out RaycastHit raycastHit, 50f, selectableMask);
+        
+        DoOutlines(raycastHit);
+        DoClicks(raycastHit);
+        // DoDrags(raycastHit); // Will need rewrite since transform offset is no longer fixed to camera
+    }
+
+    void DoMovement()
+    {
         if (movementPlayerWants != Vector3.zero)
         {
             if (currentSpeed < 1)
@@ -126,14 +140,7 @@ public class FreeMovement : MonoBehaviour
             Quaternion newRotation = Quaternion.Euler(clickRotation.x + xRotation, clickRotation.y + yRotation, clickRotation.z);
             transform.rotation = newRotation;
         }
-        
-        Physics.Raycast(cameraTransform.position, cameraTransform.forward, out RaycastHit hitInfo, selectionRange, selectableMask);
-        
-        DoOutlines(hitInfo);
-        DoClicks(hitInfo);
-        DoDrags(hitInfo);
     }
-
 
     public interface Hoverable {
         public void Hover(); public void Unhover();

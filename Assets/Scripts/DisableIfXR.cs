@@ -10,7 +10,7 @@ public class DisableIfXR : MonoBehaviour
     void Start()
     {
         if (target == null) target = gameObject;
-        if (IsThisJustFantasy())
+        if (IsXR())
         {
             Debug.Log("Disabling " + target + " since XR is available.");
             if (target is Collider collider)          { collider.enabled = false;         }
@@ -26,8 +26,8 @@ public class DisableIfXR : MonoBehaviour
         }
     }
 
-    public static bool IsThisTheRealLife() { return !IsThisJustFantasy(); }
-    public static bool IsThisJustFantasy()
+    public static bool IsNotXR() { return !IsXR(); }
+    public static bool IsXR()
     {
         if (isXR == null)
         {
