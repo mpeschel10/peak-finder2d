@@ -7,17 +7,24 @@ public class Tiles : MonoBehaviour
 {
     [SerializeField] GameObject canonicalTile;
     [SerializeField] Material winMaterial;
-
+    Material defaultMaterial;
     void Awake() { canonicalTile.SetActive(false); }
     
     [SerializeField] int rowCount = 20;
     [SerializeField] int columnCount = 20;
+    [SerializeField] float heightScale = 4;
+
+    [SerializeField] TMPro.TMP_Text costText;
+
     int _rowCount, _columnCount;
     GameObject[][] tiles;
     float[][] heights;
 
     void Start()
     {
+        cost = 0;
+        UpdateCost();
+        defaultMaterial = canonicalTile.transform.GetChild(0).GetComponent<MeshRenderer>().material;
         _rowCount = rowCount + 2;
         _columnCount = columnCount + 2;
         heights = new float[_rowCount][];
@@ -68,14 +75,69 @@ public class Tiles : MonoBehaviour
         }
     }
 
+    public bool collapseHeights, collapseColors = true;
+    public bool collapseAltitudes = false;
     void Collapse(int r, int c)
     {
-        float height = GetHeight(r, c);
-        heights[r][c] = height;
-        Color color = Color.HSVToRGB(height, 1f, 0.5f);
+        heights[r][c] = GetHeight(r, c);
+        tiles[r][c].layer = 0;
+        Show(r, c);
+        cost++;
+        UpdateCost();
+    }
+
+    int cost = 0;
+    void Show(int r, int c)
+    {
         GameObject tile = tiles[r][c];
-        tile.GetComponent<MeshRenderer>().material.color = color;
-        tile.layer = 0;
+        float height = heights[r][c];
+        if (float.IsNaN(height)) return;
+        
+        if (collapseColors)
+        {
+            Color color = Color.HSVToRGB(height, 1f, 0.5f);
+            tile.GetComponent<MeshRenderer>().material.color = color;
+        } else {
+            tile.GetComponent<MeshRenderer>().material = defaultMaterial;
+        }
+        
+        if (collapseHeights)
+        {
+            Vector3 os = tile.transform.parent.localScale;
+            tile.transform.parent.localScale = new Vector3(os.x, height * heightScale, os.z);
+        } else {
+            Vector3 os = tile.transform.parent.localScale;
+            tile.transform.parent.localScale = new Vector3(os.x, 0.1f, os.z);
+        }
+
+        if (collapseAltitudes)
+        {
+            Vector3 op = tile.transform.parent.localPosition;
+            tile.transform.parent.localPosition = new Vector3(op.x, height * heightScale, op.z);
+        } else {
+            Vector3 op = tile.transform.parent.localPosition;
+            tile.transform.parent.localPosition = new Vector3(op.x, 0, op.z);
+        }
+
+    }
+
+    void ShowAll()
+    {
+        for (int r = 1; r < _rowCount - 1; r++)
+            for (int c = 1; c < _columnCount - 1; c++)
+                Show(r, c);
+    }
+
+    public void SetCollapseColors(bool enabled) { collapseColors = enabled; ShowAll(); CheckWin(); }
+    // public void SetCollapseHeights(bool enabled) { collapseHeights = enabled; ShowAll(); }
+    public void SetCollapseHeights(int condition)
+    {
+        // condition = 0: set height of tile with scale
+        // condition = 1: set altitude of tile with position
+        // condition = 2: nothing
+        collapseHeights = condition == 0;
+        collapseAltitudes = condition == 1;
+        ShowAll();
     }
 
     float GetHeight(int r, int c)
@@ -125,5 +187,10 @@ public class Tiles : MonoBehaviour
         (int r, int c) = ( (int, int) ) arguments;
         Collapse(r, c);
         CheckWin();
+    }
+
+    void UpdateCost()
+    {
+        costText.text = "Cost: " + cost;
     }
 }
